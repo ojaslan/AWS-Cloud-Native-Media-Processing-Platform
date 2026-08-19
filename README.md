@@ -3,7 +3,8 @@
 A **scalable, highly available, fault-tolerant, secure, cost-optimized, and observable AWS architecture** for video upload, asynchronous processing, metadata management, and global media delivery.
 
 ## 🏗️ Architecture
-https://media.licdn.com/dms/image/v2/D4D22AQGuHW9U78KWag/feedshare-image-high-res/B4DaAYz28FJ0AU-/0/1787122642919?e=1788998400&v=beta&t=5JnjKDGEYFSlymOgPX9xe9Am_ExCljEQKokHS7BWo9g
+<img width="1080" height="797" alt="image" src="https://github.com/user-attachments/assets/eb85f05b-a023-44af-9e72-0d852bb9a549" />
+
 
 
 
