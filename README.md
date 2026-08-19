@@ -4,7 +4,96 @@ A **scalable, highly available, fault-tolerant, secure, cost-optimized, and obse
 
 ## 🏗️ Architecture
 
-![Cloud-Native Video Processing Architecture](architecture.png)
+flowchart TB
+
+    %% USERS
+    U[Web / Mobile Users]
+    ADMIN[Admin]
+    GLOBAL[Global End Users]
+
+    %% EDGE
+    R53[Amazon Route 53<br/>DNS]
+    CF[Amazon CloudFront<br/>CDN]
+    WAF[AWS WAF]
+
+    U --> R53
+    ADMIN --> R53
+    R53 --> CF
+    CF --> WAF
+
+    %% AWS VPC
+    subgraph AWS[AWS Cloud]
+        subgraph VPC[VPC 10.0.0.0/16]
+
+            %% PUBLIC TIER
+            subgraph PUBLIC[Public Subnets - Across 3 AZs]
+                ALB[Application Load Balancer]
+                API[API / Web Application<br/>EC2 Auto Scaling Group]
+                REDIS[Amazon ElastiCache<br/>Redis]
+
+                ALB --> API
+                API --> REDIS
+            end
+
+            %% INGESTION
+            subgraph INGEST[Private Subnets - Ingestion Tier - Across 3 AZs]
+                UPLOAD[Upload Service<br/>EC2 Auto Scaling]
+                RAW[S3<br/>Raw Video Uploads]
+                SQS[Amazon SQS<br/>Upload Queue]
+
+                UPLOAD --> RAW
+                RAW --> SQS
+            end
+
+            %% PROCESSING
+            subgraph PROCESS[Private Subnets - Processing Tier - Across 3 AZs]
+                WORKER[Video Processing Workers<br/>EC2 Auto Scaling Group]
+                EFS[Amazon EFS<br/>Shared Storage]
+                PROCESSED[S3<br/>Processed Videos]
+
+                WORKER --> EFS
+                WORKER --> PROCESSED
+            end
+
+            %% DATABASE
+            subgraph DATA[Private Subnets - Data Tier - Across 3 AZs]
+                RDS[Amazon RDS<br/>PostgreSQL Multi-AZ]
+                DDB[Amazon DynamoDB<br/>Job Metadata / Status]
+                MEDIA[S3<br/>Thumbnails / Subtitles / Transcripts]
+            end
+
+            %% INTERNAL FLOW
+            API --> UPLOAD
+            SQS --> WORKER
+            WORKER --> DDB
+            WORKER --> RDS
+            PROCESSED --> MEDIA
+
+        end
+
+        %% NAT / INTERNET
+        NAT[NAT Gateway]
+        IGW[Internet Gateway]
+
+        VPC --> NAT
+        NAT --> IGW
+    end
+
+    %% DELIVERY
+    CF --> ALB
+    CF --> MEDIA
+    MEDIA --> GLOBAL
+
+    %% STORAGE LIFECYCLE
+    RAW -. Lifecycle Policy .-> ARCHIVE[S3 Glacier / IA]
+
+    %% MONITORING
+    MON[Amazon CloudWatch<br/>Logs / Metrics / Alarms]
+
+    API -.-> MON
+    WORKER -.-> MON
+    ALB -.-> MON
+    RDS -.-> MON
 
 ## 📌 Project Overview
 
